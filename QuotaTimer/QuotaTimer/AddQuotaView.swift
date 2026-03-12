@@ -6,13 +6,19 @@ struct AddQuotaView: View {
     @ObservedObject var store: QuotaStore
     
     @State private var email: String = ""
-    @State private var dateString: String = "12/3/2026"
+    @State private var dateString: String = "12/03/2026"
     @State private var timeString: String = "14:53:58"
     @State private var showError = false
     
     // Theme Colors
     let contentBg = Color(red: 35/255, green: 35/255, blue: 35/255)
     let borderColor = Color.white.opacity(0.1)
+    
+    var isFormValid: Bool {
+        !email.trimmingCharacters(in: .whitespaces).isEmpty &&
+        !dateString.trimmingCharacters(in: .whitespaces).isEmpty &&
+        !timeString.trimmingCharacters(in: .whitespaces).isEmpty
+    }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -66,11 +72,11 @@ struct AddQuotaView: View {
                                 .font(.body)
                                 .foregroundColor(.white)
                                 .frame(width: 150, alignment: .trailing)
-                            Text("Format: MM/D/YYYY (e.g., 12/3/2026)")
+                            Text("Format: D/MM/YYYY (e.g., 12/03/2026)")
                                 .font(.system(size: 9))
                                 .foregroundColor(.secondary)
                         }
-                        TextField("12/3/2026", text: $dateString)
+                        TextField("12/03/2026", text: $dateString)
                             .textFieldStyle(.plain)
                             .padding(8)
                             .background(Color.white.opacity(0.05))
@@ -105,9 +111,13 @@ struct AddQuotaView: View {
                 
                 HStack {
                     if showError {
-                        Text("Invalid format. Use MM/D/YYYY and HH:MM:SS")
+                        Text("Invalid format. Use D/MM/YYYY and HH:MM:SS")
                             .font(.caption2)
                             .foregroundColor(.red)
+                    } else if !isFormValid && (!email.isEmpty || !dateString.isEmpty || !timeString.isEmpty) {
+                        Text("All fields are required")
+                            .font(.caption2)
+                            .foregroundColor(.orange.opacity(0.8))
                     }
                     Spacer()
                     Button("Cancel") {
@@ -126,10 +136,11 @@ struct AddQuotaView: View {
                     .buttonStyle(.plain)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
-                    .background(Color.blue)
-                    .foregroundColor(.white)
+                    .background(isFormValid ? Color.blue : Color.gray.opacity(0.3))
+                    .foregroundColor(isFormValid ? .white : .white.opacity(0.5))
                     .cornerRadius(6)
                     .padding(.leading, 8)
+                    .disabled(!isFormValid)
                 }
                 .padding(.top, 20)
             }
@@ -141,25 +152,25 @@ struct AddQuotaView: View {
             
             // Footer
             HStack {
-                Image(systemName: "square.on.square")
-                    .foregroundColor(.secondary)
-                Text("SYSTEM MONITOR V2.4")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-                Spacer()
-                HStack(spacing: 4) {
-                    Circle()
-                        .fill(Color.green)
-                        .frame(width: 6, height: 6)
-                    Text("All Systems Operational")
-                        .font(.caption2)
-                        .italic()
-                        .foregroundColor(.secondary)
+                HStack(spacing: 6) {
+                    Image(systemName: "copyright")
+                    Text("© ALL RIGHTS RESERVED TO RATHORE LLC ™")
+                        .fontWeight(.bold)
+                        .kerning(1)
                 }
+                .font(.system(size: 8))
+                .foregroundColor(.secondary)
+                
+                Spacer()
+                
+                Text("SECURE SYSTEM")
+                    .font(.system(size: 8, weight: .bold))
+                    .kerning(1)
+                    .foregroundColor(.secondary.opacity(0.6))
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-            .background(Color.black.opacity(0.3))
+            .padding(.horizontal, 24)
+            .padding(.vertical, 12)
+            .background(Color.black.opacity(0.4))
         }
         .frame(width: 600, height: 500)
         .preferredColorScheme(.dark)
@@ -170,11 +181,11 @@ struct AddQuotaView: View {
         formatter.locale = Locale(identifier: "en_US_POSIX")
         
         let formats = [
-            "MM/d/yyyy HH:mm:ss",
-            "M/d/yyyy HH:mm:ss",
-            "MM/dd/yyyy HH:mm:ss",
-            "M/d/yy HH:mm:ss",
-            "MM/dd/yy HH:mm:ss"
+            "d/MM/yyyy HH:mm:ss",
+            "dd/MM/yyyy HH:mm:ss",
+            "d/M/yyyy HH:mm:ss",
+            "dd/M/yyyy HH:mm:ss",
+            "d/MM/yy HH:mm:ss"
         ]
         
         let cleanedDate = dateString.trimmingCharacters(in: .whitespaces)
@@ -191,7 +202,7 @@ struct AddQuotaView: View {
         }
         
         if let date = parsedDate {
-            let newEntry = QuotaEntry(email: email.isEmpty ? "unknown@example.com" : email, resetDate: date)
+            let newEntry = QuotaEntry(email: email.trimmingCharacters(in: .whitespaces), resetDate: date)
             DispatchQueue.main.async {
                 store.addEntry(newEntry)
                 dismiss()

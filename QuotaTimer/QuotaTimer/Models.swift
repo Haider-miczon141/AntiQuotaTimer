@@ -59,6 +59,10 @@ class QuotaStore: ObservableObject {
         entries.insert(entry, at: 0)
     }
     
+    func removeEntries(ids: Set<UUID>) {
+        entries.removeAll { ids.contains($0.id) }
+    }
+    
     private func save() {
         if let encoded = try? JSONEncoder().encode(entries) {
             UserDefaults.standard.set(encoded, forKey: saveKey)

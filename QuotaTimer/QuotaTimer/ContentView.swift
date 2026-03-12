@@ -7,6 +7,7 @@ struct ContentView: View {
     @State private var searchText: String = ""
     @State private var isShowingAddSheet = false
     @State private var selectedIds: Set<UUID> = []
+    @State private var editingEntry: QuotaEntry? = nil
     @State private var now = Date()
     
     let timer = Timer.publish(every: 10, on: .main, in: .common).autoconnect()
@@ -91,6 +92,34 @@ struct ContentView: View {
                             .overlay(
                                 RoundedRectangle(cornerRadius: 6)
                                     .stroke(Color.red.opacity(0.3), lineWidth: 1)
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .transition(.move(edge: .trailing).combined(with: .opacity))
+                        .padding(.trailing, 8)
+                    }
+                    
+                    if selectedIds.count == 1 {
+                        Button(action: {
+                            if let id = selectedIds.first,
+                               let entry = store.entries.first(where: { $0.id == id }) {
+                                editingEntry = entry
+                                isShowingAddSheet = true
+                            }
+                        }) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "pencil")
+                                Text("Update")
+                                    .fontWeight(.medium)
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(Color.blue.opacity(0.1))
+                            .foregroundColor(.blue)
+                            .cornerRadius(6)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .stroke(Color.blue.opacity(0.3), lineWidth: 1)
                             )
                         }
                         .buttonStyle(.plain)
@@ -229,8 +258,8 @@ struct ContentView: View {
                 now = input
             }
         }
-        .sheet(isPresented: $isShowingAddSheet) {
-            AddQuotaView(store: store)
+        .sheet(isPresented: $isShowingAddSheet, onDismiss: { editingEntry = nil }) {
+            AddQuotaView(store: store, editingEntry: editingEntry)
         }
     }
 }

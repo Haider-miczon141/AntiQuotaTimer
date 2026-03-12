@@ -4,6 +4,7 @@ import Combine
 struct AddQuotaView: View {
     @Environment(\.dismiss) var dismiss
     @ObservedObject var store: QuotaStore
+    var editingEntry: QuotaEntry? = nil
     
     @State private var email: String = ""
     @State private var dateString: String = "12/03/2026"
@@ -25,7 +26,7 @@ struct AddQuotaView: View {
             // Title bar
             HStack {
                 Spacer()
-                Text("Manual Entry - Quota Reset")
+                Text(editingEntry == nil ? "Manual Entry - Quota Reset" : "Update Entry - Quota Reset")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                 Spacer()
@@ -39,11 +40,11 @@ struct AddQuotaView: View {
             // Form Content
             VStack(alignment: .leading, spacing: 25) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Log Reset Event")
+                    Text(editingEntry == nil ? "Log Reset Event" : "Update Reset Event")
                         .font(.title2)
                         .bold()
                         .foregroundColor(.white)
-                    Text("Enter the details for the manual quota refresh cycle.")
+                    Text(editingEntry == nil ? "Enter the details for the manual quota refresh cycle." : "Modify the existing quota reset details.")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
@@ -130,7 +131,7 @@ struct AddQuotaView: View {
                     .foregroundColor(.white)
                     .cornerRadius(6)
                     
-                    Button("Save Entry") {
+                    Button(editingEntry == nil ? "Save Entry" : "Update Entry") {
                         saveEntry()
                     }
                     .buttonStyle(.plain)
@@ -174,6 +175,20 @@ struct AddQuotaView: View {
         }
         .frame(width: 600, height: 500)
         .preferredColorScheme(.dark)
+        .onAppear {
+            if let entry = editingEntry {
+                email = entry.email
+                
+                let dateFormatter = DateFormatter()
+                dateFormatter.dateFormat = "d/MM/yyyy"
+                dateString = dateFormatter.string(from: entry.resetDate)
+                
+                let timeFormatter = DateFormatter()
+                timeFormatter.locale = Locale(identifier: "en_US_POSIX")
+                timeFormatter.dateFormat = "HH:mm:ss"
+                timeString = timeFormatter.string(from: entry.resetDate)
+            }
+        }
     }
     
     func saveEntry() {
@@ -202,10 +217,18 @@ struct AddQuotaView: View {
         }
         
         if let date = parsedDate {
-            let newEntry = QuotaEntry(email: email.trimmingCharacters(in: .whitespaces), resetDate: date)
-            DispatchQueue.main.async {
-                store.addEntry(newEntry)
-                dismiss()
+            if let existing = editingEntry {
+                let updatedEntry = QuotaEntry(id: existing.id, email: email.trimmingCharacters(in: .whitespaces), resetDate: date)
+                DispatchQueue.main.async {
+                    store.updateEntry(updatedEntry)
+                    dismiss()
+                }
+            } else {
+                let newEntry = QuotaEntry(email: email.trimmingCharacters(in: .whitespaces), resetDate: date)
+                DispatchQueue.main.async {
+                    store.addEntry(newEntry)
+                    dismiss()
+                }
             }
         } else {
             withAnimation {

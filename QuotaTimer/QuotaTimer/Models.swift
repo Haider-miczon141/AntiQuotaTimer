@@ -59,6 +59,12 @@ class QuotaStore: ObservableObject {
         entries.insert(entry, at: 0)
     }
     
+    func updateEntry(_ entry: QuotaEntry) {
+        if let index = entries.firstIndex(where: { $0.id == entry.id }) {
+            entries[index] = entry
+        }
+    }
+    
     func removeEntries(ids: Set<UUID>) {
         entries.removeAll { ids.contains($0.id) }
     }
